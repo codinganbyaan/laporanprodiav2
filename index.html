@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Laporan Barang Penemuan</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: #f9fafb;
+      margin: 0;
+      padding: 20px;
+    }
+    h2 {
+      text-align: center;
+      color: #1e3a8a;
+      margin-bottom: 20px;
+    }
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+    }
+    form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+    }
+    label { font-weight: bold; font-size: 14px; color: #374151; }
+    input {
+      padding: 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    th {
+      background: #1e3a8a;
+      color: white;
+      padding: 10px;
+      text-align: center;
+    }
+    td {
+      border: 1px solid #e5e7eb;
+      padding: 8px;
+      text-align: center;
+      font-size: 14px;
+    }
+    tr:nth-child(even) { background: #f3f4f6; }
+    tr:hover { background: #e0e7ff; }
+    .btn {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      margin: 5px;
+    }
+    .btn-primary { background: #2563eb; color: white; }
+    .btn-primary:hover { background: #1e40af; }
+    .btn-danger { background: #dc2626; color: white; }
+    .btn-danger:hover { background: #991b1b; }
+    .btn-success { background: #059669; color: white; }
+    .btn-success:hover { background: #065f46; }
+    .action-buttons { text-align: center; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h2>Laporan Barang Penemuan</h2>
+
+  <!-- Form Input -->
+  <div class="card">
+    <form id="barangForm">
+      <div>
+        <label>Tanggal</label>
+        <input type="date" id="tanggal" required>
+      </div>
+      <div>
+        <label>Nama Barang</label>
+        <input type="text" id="namaBarang" required>
+      </div>
+      <div>
+        <label>Jam Ditemukan</label>
+        <input type="time" id="jam" required>
+      </div>
+      <div>
+        <label>Lokasi Penemuan</label>
+        <input type="text" id="lokasi" required>
+      </div>
+      <div>
+        <label>Yang Menyerahkan</label>
+        <input type="text" id="menyerahkan" required>
+      </div>
+      <div>
+        <label>Yang Menerima</label>
+        <input type="text" id="menerima" required>
+      </div>
+      <div>
+        <label>Tanggal Ambil</label>
+        <input type="date" id="tanggalAmbil">
+      </div>
+      <div>
+        <label>Nama Pemilik</label>
+        <input type="text" id="pemilik">
+      </div>
+      <div>
+        <label>Jam Ambil</label>
+        <input type="time" id="jamAmbil">
+      </div>
+      <div>
+        <label>Paraf Pemilik</label>
+        <input type="text" id="paraf">
+      </div>
+    </form>
+  </div>
+
+  <!-- Tombol Aksi -->
+  <div class="action-buttons">
+    <button class="btn btn-primary" onclick="tambahBarang()">Tambah Barang</button>
+    <button class="btn btn-danger" onclick="resetData()">Reset Semua</button>
+    <button class="btn btn-success" onclick="generatePDF()">Download PDF</button>
+  </div>
+
+  <!-- Tabel -->
+  <table id="laporanTable">
+    <thead>
+      <tr>
+        <th>Tanggal</th>
+        <th>Nama Barang</th>
+        <th>Jam Ditemukan</th>
+        <th>Lokasi Penemuan</th>
+        <th>Yang Menyerahkan</th>
+        <th>Yang Menerima</th>
+        <th>Tanggal Ambil</th>
+        <th>Nama Pemilik</th>
+        <th>Jam Ambil</th>
+        <th>Paraf Pemilik</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    let dataBarang = JSON.parse(localStorage.getItem("barangPenemuan")) || [];
+
+    function renderTable() {
+      const tbody = document.querySelector("#laporanTable tbody");
+      tbody.innerHTML = "";
+      dataBarang.forEach((item) => {
+        let row = `<tr>
+          <td>${item.tanggal}</td>
+          <td>${item.namaBarang}</td>
+          <td>${item.jam}</td>
+          <td>${item.lokasi}</td>
+          <td>${item.menyerahkan}</td>
+          <td>${item.menerima}</td>
+          <td>${item.tanggalAmbil || "-"}</td>
+          <td>${item.pemilik || "-"}</td>
+          <td>${item.jamAmbil || "-"}</td>
+          <td>${item.paraf || "-"}</td>
+        </tr>`;
+        tbody.innerHTML += row;
+      });
+      localStorage.setItem("barangPenemuan", JSON.stringify(dataBarang));
+    }
+
+    function tambahBarang() {
+      const barang = {
+        tanggal: document.getElementById("tanggal").value,
+        namaBarang: document.getElementById("namaBarang").value,
+        jam: document.getElementById("jam").value,
+        lokasi: document.getElementById("lokasi").value,
+        menyerahkan: document.getElementById("menyerahkan").value,
+        menerima: document.getElementById("menerima").value,
+        tanggalAmbil: document.getElementById("tanggalAmbil").value,
+        pemilik: document.getElementById("pemilik").value,
+        jamAmbil: document.getElementById("jamAmbil").value,
+        paraf: document.getElementById("paraf").value,
+      };
+      if (!barang.tanggal || !barang.namaBarang || !barang.jam || !barang.lokasi || !barang.menyerahkan || !barang.menerima) {
+        alert("Isi semua data wajib!");
+        return;
+      }
+      dataBarang.push(barang);
+      renderTable();
+      document.getElementById("barangForm").reset();
+    }
+
+    function resetData() {
+      if (confirm("Yakin ingin menghapus semua data?")) {
+        dataBarang = [];
+        localStorage.removeItem("barangPenemuan");
+        renderTable();
+      }
+    }
+
+    function generatePDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF("landscape");
+
+      // Judul
+      doc.setFontSize(18);
+      doc.setTextColor(30, 58, 138);
+      doc.text("LAPORAN BARANG PENEMUAN", 14, 20);
+
+      // Tanggal Cetak
+      const today = new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" });
+      doc.setFontSize(11);
+      doc.setTextColor(70);
+      doc.text(`Dicetak pada: ${today}`, 14, 28);
+
+      // Tabel
+      doc.autoTable({
+        head: [[
+          "Tanggal", "Nama Barang", "Jam Ditemukan", "Lokasi Penemuan", 
+          "Yang Menyerahkan", "Yang Menerima", "Tanggal Ambil", 
+          "Nama Pemilik", "Jam Ambil", "Paraf Pemilik"
+        ]],
+        body: dataBarang.map(item => [
+          item.tanggal, item.namaBarang, item.jam, item.lokasi,
+          item.menyerahkan, item.menerima, item.tanggalAmbil || "-",
+          item.pemilik || "-", item.jamAmbil || "-", item.paraf || "-"
+        ]),
+        startY: 35,
+        styles: { fontSize: 10, cellPadding: 4, lineWidth: 0.1 },
+        headStyles: { fillColor: [30, 58, 138], textColor: 255, halign: 'center' },
+        bodyStyles: { valign: 'top' },
+        alternateRowStyles: { fillColor: [240, 240, 240] },
+        theme: "grid",
+      });
+
+      doc.save("laporan_barang.pdf");
+    }
+
+    renderTable();
+  </script>
+</body>
+</html>
